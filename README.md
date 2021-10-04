@@ -1,2 +1,2 @@
 # opengl-rt-raytracing
-OpenGL real time raytracing
+OpenGL real time ray tracing
