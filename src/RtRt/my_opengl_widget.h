@@ -5,8 +5,11 @@
 #include <QOpenGLBuffer>
 #include <QMatrix4x4>
 #include <QOpenGLTexture>
+#include <QOpenGLShaderProgram>
 #include <QTimer>
 #include <memory>
+
+#include "gl_objects/gl_plane.h"
 
 class MyOpenGLWidget : public QOpenGLWidget {
     Q_OBJECT
@@ -31,11 +34,15 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
+    std::shared_ptr<QOpenGLShaderProgram> loadProgram(QString vertex_shader_file, QString fragment_shader_file);
+
     void initView();
 
     void onTimer();
 
 private:
+    std::shared_ptr<QOpenGLShaderProgram> program;
+
     QMatrix4x4 model_matrix, view_matrix, projection_matrix;
 
     float rotation_y_angle {0.0f}, rotation_x_angle {0.0f};
@@ -43,5 +50,6 @@ private:
     QPoint mouse_pos {0, 0};
 
     QColor background_color {0, 0, 25};
-};
 
+    std::shared_ptr<GLPlane> plane;
+};

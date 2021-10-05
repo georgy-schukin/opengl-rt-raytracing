@@ -27,6 +27,11 @@ void MyOpenGLWidget::initializeGL() {
 
     initView();
 
+    program = loadProgram("shaders/rt.vert", "shaders/rt.frag");
+
+    plane = std::make_shared<GLPlane>();
+    plane->attachVertices(program.get(), "vertex");
+
     emit initialized();
 }
 
@@ -34,7 +39,8 @@ void MyOpenGLWidget::initView() {
     model_matrix.setToIdentity();
 
     view_matrix.setToIdentity();
-    view_matrix.lookAt(QVector3D(3.0f, 3.0f, 3.0f), QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
+    view_matrix.ortho(0, 1, 0, 1, 0, 1);
+    //view_matrix.lookAt(QVector3D(3.0f, 3.0f, 3.0f), QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
 
     projection_matrix.setToIdentity();
     const auto aspect = float(width()) / float(height());
@@ -64,6 +70,35 @@ void MyOpenGLWidget::paintGL() {
                      static_cast<GLfloat>(background_color.greenF()),
                      static_cast<GLfloat>(background_color.blueF()), 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!program) {
+        return;
+    }
+
+    program->bind();
+
+    const auto mvp = projection_matrix * view_matrix * model_matrix;
+    program->setUniformValue(program->uniformLocation("MVP"), mvp);
+
+    plane->draw(gl);
+
+    program->release();
+}
+
+std::shared_ptr<QOpenGLShaderProgram> MyOpenGLWidget::loadProgram(QString vertex_shader_file, QString fragment_shader_file) {
+    auto prog = std::make_shared<QOpenGLShaderProgram>();
+    if (!prog->addShaderFromSourceFile(QOpenGLShader::Vertex, QString(vertex_shader_file))) {
+        throw std::runtime_error(std::string("Failed to load vertex shaders from ") + vertex_shader_file.toStdString()
+                                 + ":\n" + prog->log().toStdString());
+    }
+    if (!prog->addShaderFromSourceFile(QOpenGLShader::Fragment, QString(fragment_shader_file))) {
+        throw std::runtime_error(std::string("Failed to load fragment shaders from ") + fragment_shader_file.toStdString()
+                                 + ":\n" + prog->log().toStdString());
+    }
+    if (!prog->link()) {
+        throw std::runtime_error(std::string("Failed to link program:\n") + prog->log().toStdString());
+    }
+    return prog;
 }
 
 void MyOpenGLWidget::onTimer() {

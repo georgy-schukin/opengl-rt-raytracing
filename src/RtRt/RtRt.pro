@@ -30,10 +30,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
+    gl_objects/gl_buffer.cpp \
+    gl_objects/gl_plane.cpp \
+    gl_objects/gl_triangulated_shape.cpp \
     main_window.cpp \
     my_opengl_widget.cpp 
 
 HEADERS  += \
+    gl_objects/gl_buffer.h \
+    gl_objects/gl_plane.h \
+    gl_objects/gl_shape.h \
+    gl_objects/gl_triangulated_shape.h \
     main_window.h \
     my_opengl_widget.h 
 
