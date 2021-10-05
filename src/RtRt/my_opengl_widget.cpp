@@ -27,7 +27,7 @@ void MyOpenGLWidget::initializeGL() {
 
     initView();
 
-    program = loadProgram("shaders/rt.vert", "shaders/rt.frag");
+    program = loadProgram("shaders/raytrace.vert", "shaders/raytrace.frag");
 
     plane = std::make_shared<GLPlane>();
     plane->attachVertices(program.get(), "vertex");
@@ -39,7 +39,7 @@ void MyOpenGLWidget::initView() {
     model_matrix.setToIdentity();
 
     view_matrix.setToIdentity();
-    view_matrix.ortho(0, 1, 0, 1, 0, 1);
+    view_matrix.ortho(-1, 1, -1, 1, 0, 1);
     //view_matrix.lookAt(QVector3D(3.0f, 3.0f, 3.0f), QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
 
     projection_matrix.setToIdentity();

@@ -48,7 +48,7 @@ FORMS    += \
     main_window.ui 
 
 DISTFILES += \
-    shaders/rt.vert \
-    shaders/rt.frag \
+    shaders/raytrace.frag \ \
+    shaders/raytrace.vert
 
 RESOURCES +=
