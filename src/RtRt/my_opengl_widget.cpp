@@ -38,29 +38,29 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::initScene() {
-    QVector3D red {0.3, 0.3, 1};
-    QVector3D blue {1, 0.3, 0.3};
+    QVector3D red {1, 0.3, 0.3};
+    QVector3D blue {0.3, 0.3, 1};
     QVector3D green {0.3, 1, 0.3};
     QVector3D white {0.5, 0.5, 0.5};
-    QVector3D yellow {0.3, 1, 1};
+    QVector3D yellow {1, 1, 0.3};
+    QVector3D purple {1, 0.3, 1};
 
-    objects.push_back(Sphere {{0, 2, 7}, 1, blue});
-    objects.push_back(Sphere {{-3, -2, 11}, 2, red});
-    objects.push_back(Sphere {{0, -2, 8}, 1, green});
-    objects.push_back(Sphere {{1.5, 0.5, 7}, 1, white});
-    objects.push_back(Sphere {{-2, 1, 6}, 0.7, yellow});
-    objects.push_back(Sphere {{2.2, 0, 8}, 1, white});
-    objects.push_back(Sphere {{4, 1, 10}, 0.7, red});
+    objects.push_back(Sphere {{0, 2, 1}, 1.5, blue});
+    objects.push_back(Sphere {{1, -2, 4}, 2, red});
+    objects.push_back(Sphere {{0, -2, -3}, 1, green});
+    objects.push_back(Sphere {{1.5, 0.5, -2}, 1, white});
+    objects.push_back(Sphere {{-2, 1, 5}, 0.7, yellow});
+    objects.push_back(Sphere {{-2.2, 0, 2}, 1, white});
+    objects.push_back(Sphere {{1, 1, 4}, 0.7, purple});
 
     lights.push_back(LightSource {{-15, 0, -15}, white});
-    //lights.push_back(LightSource {{1, 1, 0}, blue});
-    //lights.push_back(LightSource {{0, -10, 6}, red});
+    lights.push_back(LightSource {{1, 1, 0}, blue});
+    lights.push_back(LightSource {{0, -10, 6}, red});
 }
 
 void MyOpenGLWidget::initView() {
     model_matrix.setToIdentity();
 
-    eye = QVector3D(0.0f, 0.0f, -10.0f);
     view_matrix.setToIdentity();    
     view_matrix.lookAt(eye, QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
 
@@ -124,6 +124,8 @@ void MyOpenGLWidget::paintGL() {
     program->setUniformValue(program->uniformLocation("camToWorld"), view_matrix.inverted());
     program->setUniformValue(program->uniformLocation("windowSize"), QVector2D(width(), height()));
     program->setUniformValue(program->uniformLocation("cameraFOV"), cameraFOV);
+    const float PI = 3.141592653589793;
+    program->setUniformValue(program->uniformLocation("fovTangent"), std::tan(cameraFOV * PI / 360.0f));
 
     plane->draw(gl);
 
@@ -163,8 +165,8 @@ void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void MyOpenGLWidget::wheelEvent(QWheelEvent *event) {
-    const auto coeff = (event->angleDelta().y() > 0 ? 1.0f : -1.0f);
-    const auto shift = coeff*QVector3D(0.2f, 0.2f, 0.2f);
-    view_matrix.translate(shift);
+    const auto coeff = (event->angleDelta().y() > 0 ? 0.5f : -0.5f);
+    eye += coeff * QVector3D(1, 1, 1);
+    initView();
     update();
 }

@@ -122,39 +122,23 @@ vec3 getIllumination(vec3 point, vec3 ray, int recursionStep) {
     return color;
 }
 
-//uniform mat4 projectionMatrix;
-//uniform mat4 projectionMatrixInv;
-//uniform mat4 viewMatrixInv;
 uniform mat4 camToWorld;
 uniform vec2 windowSize;
 uniform float cameraFOV;
+uniform float fovTangent;
 
-in vec3 ndcPos;
 out vec4 fragColor;
 
 void main()
-{    
-    vec2 pixelPos = gl_FragCoord.xy;
-    //float x = (2.0f * pixelPos.x) / windowSize.x - 1.0f;
-    //float y = (2.0f * pixelPos.y) / windowSize.y - 1.0f;
-    //vec3 pos = vec4(viewMatrixInv * projectionMatrixInv * vec4(ndcPos, 1)).xyz; // pixel pos in world
-    //vec4 rayClip = vec4(ndcPos.xy, -1.0, 1.0);
-    //vec4 rayEye = vec4(vec4(projectionMatrixInv * rayClip).xy, -1.0f, 0.0f);
-    //vec3 ray = normalize(vec4(viewMatrixInv * rayEye).xyz);
-    float PI = 3.14159;
+{
     float aspect = windowSize.x / windowSize.y; // assuming width > height
-    float tn = tan(cameraFOV * PI / 360);
-    float px = (2 * (pixelPos.x + 0.5) / windowSize.x - 1) * tn * aspect;
-    float py = (2 * (pixelPos.y + 0.5) / windowSize.y - 1) * tn;
+    vec2 pixelPos = gl_FragCoord.xy;
+    float px = (2 * (pixelPos.x + 0.5) / windowSize.x - 1) * fovTangent * aspect;
+    float py = (2 * (pixelPos.y + 0.5) / windowSize.y - 1) * fovTangent;
     vec3 viewPoint = vec4(camToWorld * vec4(0, 0, 0, 1)).xyz;
     vec3 posWorld = vec4(camToWorld * vec4(px, py, -1, 1)).xyz;
-
-    //vec3 viewPoint = vec4(viewMatrixInv * vec4(0, 0, 0, 1)).xyz; // cam eye in world
-    //vec3 ray = normalize(pos - viewPoint);
     vec3 ray = normalize(posWorld - viewPoint);
     vec3 color = getIllumination(viewPoint, ray, 0);
     color = clamp(color, vec3(0), vec3(1));
     fragColor = vec4(color, 1.0f);
-    //fragColor = vec4(vec2(ray + vec3(1))/2, 0, 1.0f);
-    //fragColor = vec4((ndcPos.xy + vec2(1))/2, 0, 1);
 }

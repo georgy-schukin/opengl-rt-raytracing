@@ -47,7 +47,7 @@ private:
     std::shared_ptr<QOpenGLShaderProgram> program;
 
     QMatrix4x4 model_matrix, view_matrix, projection_matrix;
-    QVector3D eye;
+    QVector3D eye = QVector3D(-10.0f, 0.0f, -10.0f);
     float cameraFOV = 45.0f;
 
     float rotation_y_angle {0.0f}, rotation_x_angle {0.0f};
