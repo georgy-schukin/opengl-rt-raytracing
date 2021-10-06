@@ -53,9 +53,9 @@ void MyOpenGLWidget::initScene() {
     objects.push_back(Sphere {{-2.2, 0, 2}, 1, white});
     objects.push_back(Sphere {{1, 1, 4}, 0.7, purple});
 
-    lights.push_back(LightSource {{-15, 0, -15}, white});
-    lights.push_back(LightSource {{1, 1, 0}, blue});
-    lights.push_back(LightSource {{0, -10, 6}, red});
+    lights.push_back(LightSource {{-15, 15, -15}, {0.1, 0.1, 0.1}});
+    lights.push_back(LightSource {{1, 1, 0}, {0.1, 0.1, 0.5}});
+    lights.push_back(LightSource {{0, -10, 6}, {0.5, 0.1, 0.1}});
 }
 
 void MyOpenGLWidget::initView() {
@@ -103,6 +103,8 @@ void MyOpenGLWidget::paintGL() {
     auto model_m = rotate * model_matrix;
 
     program->bind();
+
+    program->setUniformValue(program->uniformLocation("numOfSteps"), 10);
 
     const auto num_of_spheres = static_cast<int>(objects.size());
     program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);

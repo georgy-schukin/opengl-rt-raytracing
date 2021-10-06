@@ -21,7 +21,7 @@ uniform int numOfLightSources;
 
 uniform vec3 ambientLight = vec3(0.05);
 
-uniform int limitOfRecursion = 1;
+uniform int numOfSteps = 1;
 
 uniform vec3 backgroundColor = vec3(0.0);
 
@@ -73,53 +73,74 @@ int getIntersection(vec3 startPoint, vec3 ray, out vec3 closestIntersectionPoint
     return closestObject;
 }
 
-vec3 getIllumination(vec3 point, vec3 ray, int recursionStep) {
-    vec3 illumPoint;
+bool nextIntersection(vec3 point, vec3 ray, int step, out vec3 color, out vec3 intersectionPoint, out vec3 reflectedRay, out Sphere sphere) {
+    color = vec3(0.0);
     // Find an object we a looking at
-    int closestObject = getIntersection(point, ray, illumPoint);
+    int closestObject = getIntersection(point, ray, intersectionPoint);
     if (closestObject == -1) {
-        return recursionStep == 0 ? backgroundColor : vec3(0.0);
+        color = (step == 0 ? backgroundColor : vec3(0));
+        return false;
     }
 
-    Sphere currSphere = spheres[closestObject];
+    sphere = spheres[closestObject];
     //return closestSphere.color;
 
-    vec3 color = vec3(0.0);
+    vec3 normal = normalize(intersectionPoint - sphere.position);
+    reflectedRay = ray - 2 * dot(normal, ray) * normal;
+
     for(int i = 0; i < numOfLightSources; i++) {
         // Check if the point on the object is illuminated
-        vec3 shadowRay = lightSources[i].position - illumPoint;
+        vec3 shadowRay = lightSources[i].position - intersectionPoint;
         float lightDistance = length(shadowRay);
-        vec3 intersectionPoint;
+        vec3 intersectionLightPoint;
         // Optimization potential: do not need closest object here, just check for an obstacle
-        int obstacle = getIntersection(illumPoint, normalize(shadowRay), intersectionPoint);
+        int obstacle = getIntersection(intersectionPoint, normalize(shadowRay), intersectionLightPoint);
         if (obstacle != -1) {
-            // Check if light is closer then the intersected object            
-            if (length(intersectionPoint - illumPoint) > lightDistance) {
+            // Check if light is closer then the intersected object
+            if (length(intersectionLightPoint - intersectionPoint) > lightDistance) {
                 obstacle = -1;
             }
         }
         if (obstacle == -1) {
             // Reflection
-            vec3 normal = normalize(illumPoint - currSphere.position);
-            float cosine = -dot(normal, ray);
-            vec3 reflectedRay = ray + 2 * cosine * normal;
-            cosine = max(0.0, dot(reflectedRay, shadowRay));
             // Apply coefficients of the body color to the intensity of the light source
-            color += lightSources[i].color * currSphere.color * cosine;
+            color += lightSources[i].color * sphere.color * max(0.0, dot(reflectedRay, shadowRay));
         }
     }
     // Apply ambient light
-    color += ambientLight * currSphere.color;
+    color += ambientLight * sphere.color;
+    return true;
+}
 
-    /*if (recursionStep < limitOfRecursion) {
-        // Reflection
-        vec3 normal = normalize(closestIntersectionPoint - closestSphere.position);
-        float cosine = -dot(normal, ray);
-        vec3 reflectedRay = normalize(ray + 2 * cosine * normal);
-        //vec3 reflectionColor = illuminationStep(closestIntersectionPoint, reflectedRay, recursionStep + 1);
-        //color += closestSphere.color * reflectionColor;
-    }*/
-    return color;
+vec3 getIllumination(vec3 point, vec3 ray) {
+    vec3 totalColor = vec3(0.0);
+    vec3 currPoint = point;
+    vec3 currRay = ray;
+    vec3 currMult = vec3(1.0);
+    bool stop = false;
+
+    for (int n = 0; n < numOfSteps && !stop; n++) {
+        vec3 intersectionPoint;
+        vec3 reflectedRay;
+        vec3 color;
+        Sphere sphere;
+        stop = !nextIntersection(currPoint, currRay, n, color, intersectionPoint, reflectedRay, sphere);
+        if (stop) {
+            totalColor += currMult * color;
+        } else {
+            totalColor += currMult * color;
+            currPoint = intersectionPoint;
+            currRay = reflectedRay;
+            currMult *= sphere.color;
+        }
+
+        //if (recursionStep < numOfSteps) {
+            // Reflection
+            //vec3 reflectionColor = getIllumination(illumPoint, normalize(reflectedRay), recursionStep + 1);
+            //color += currSphere.color * reflectionColor;
+        //}
+    }
+    return totalColor;
 }
 
 uniform mat4 camToWorld;
@@ -138,7 +159,7 @@ void main()
     vec3 viewPoint = vec4(camToWorld * vec4(0, 0, 0, 1)).xyz;
     vec3 posWorld = vec4(camToWorld * vec4(px, py, -1, 1)).xyz;
     vec3 ray = normalize(posWorld - viewPoint);
-    vec3 color = getIllumination(viewPoint, ray, 0);
+    vec3 color = getIllumination(viewPoint, ray);
     color = clamp(color, vec3(0), vec3(1));
     fragColor = vec4(color, 1.0f);
 }
