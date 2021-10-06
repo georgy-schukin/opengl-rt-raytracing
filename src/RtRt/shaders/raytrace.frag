@@ -92,9 +92,10 @@ bool nextIntersection(vec3 point, vec3 ray, int step, out vec3 color, out vec3 i
         // Check if the point on the object is illuminated
         vec3 shadowRay = lightSources[i].position - intersectionPoint;
         float lightDistance = length(shadowRay);
+        shadowRay = normalize(shadowRay);
         vec3 intersectionLightPoint;
         // Optimization potential: do not need closest object here, just check for an obstacle
-        int obstacle = getIntersection(intersectionPoint, normalize(shadowRay), intersectionLightPoint);
+        int obstacle = getIntersection(intersectionPoint, shadowRay, intersectionLightPoint);
         if (obstacle != -1) {
             // Check if light is closer then the intersected object
             if (length(intersectionLightPoint - intersectionPoint) > lightDistance) {

@@ -17,7 +17,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setSamples(2);
+    format.setSamples(4);
     setFormat(format);
 }
 
@@ -41,7 +41,7 @@ void MyOpenGLWidget::initScene() {
     QVector3D red {1, 0.3, 0.3};
     QVector3D blue {0.3, 0.3, 1};
     QVector3D green {0.3, 1, 0.3};
-    QVector3D white {0.5, 0.5, 0.5};
+    QVector3D white {0.8, 0.8, 0.8};
     QVector3D yellow {1, 1, 0.3};
     QVector3D purple {1, 0.3, 1};
 
@@ -53,9 +53,9 @@ void MyOpenGLWidget::initScene() {
     objects.push_back(Sphere {{-2.2, 0, 2}, 1, white});
     objects.push_back(Sphere {{1, 1, 4}, 0.7, purple});
 
-    lights.push_back(LightSource {{-15, 15, -15}, {0.1, 0.1, 0.1}});
-    lights.push_back(LightSource {{1, 1, 0}, {0.1, 0.1, 0.5}});
-    lights.push_back(LightSource {{0, -10, 6}, {0.5, 0.1, 0.1}});
+    lights.push_back(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
+    lights.push_back(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
+    lights.push_back(LightSource {{0, -10, 6}, {1.0, 0.2, 0.2}});
 }
 
 void MyOpenGLWidget::initView() {
