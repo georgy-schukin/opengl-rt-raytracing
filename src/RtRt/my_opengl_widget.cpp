@@ -77,6 +77,14 @@ QColor MyOpenGLWidget::getBackgroundColor() const {
     return background_color;
 }
 
+void MyOpenGLWidget::setIterationLimit(int limit) {
+    num_of_steps = limit;
+}
+
+int MyOpenGLWidget::getIterationLimit() const {
+    return num_of_steps;
+}
+
 void MyOpenGLWidget::resizeGL(int width, int height) {
     auto *gl = context()->functions();
 
@@ -104,7 +112,7 @@ void MyOpenGLWidget::paintGL() {
 
     program->bind();
 
-    program->setUniformValue(program->uniformLocation("numOfSteps"), 10);
+    program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);
 
     const auto num_of_spheres = static_cast<int>(objects.size());
     program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);

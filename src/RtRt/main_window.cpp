@@ -33,6 +33,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::initMenu() {
+    ui->actionShow_Toolbar->setChecked(true);
 }
 
 void MainWindow::initStatusbar() {
@@ -40,7 +41,18 @@ void MainWindow::initStatusbar() {
 }
 
 void MainWindow::initToolbar() {
-    ui->mainToolBar->setVisible(false);
+    steps = new QSpinBox(this);
+    steps->setMinimum(1);
+    steps->setMaximum(1000);
+    steps->setFocusPolicy(Qt::TabFocus);
+    steps->setValue(gl_widget->getIterationLimit());
+    connect(steps, qOverload<int>(&QSpinBox::valueChanged), [this](int value) {
+        gl_widget->setIterationLimit(value);
+        gl_widget->update();
+    });
+
+    ui->mainToolBar->addWidget(new QLabel("Steps: ", this));
+    ui->mainToolBar->addWidget(steps);
 }
 
 void MainWindow::initGlWidget() {
@@ -67,4 +79,8 @@ void MainWindow::on_actionExit_triggered() {
 
 void MainWindow::showError(QString message) {
     QMessageBox::critical(this, "Error", message);
+}
+
+void MainWindow::on_actionShow_Toolbar_triggered() {
+    ui->mainToolBar->setVisible(!ui->mainToolBar->isVisible());
 }

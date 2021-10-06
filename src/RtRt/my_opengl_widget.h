@@ -22,6 +22,9 @@ public:
     void setBackgroundColor(QColor color);
     QColor getBackgroundColor() const;
 
+    void setIterationLimit(int limit);
+    int getIterationLimit() const;
+
 signals:
     void initialized();
 
@@ -60,4 +63,6 @@ private:
 
     std::vector<Sphere> objects;
     std::vector<LightSource> lights;
+
+    int num_of_steps = 10;
 };

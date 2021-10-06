@@ -33,6 +33,8 @@ private slots:
 
     void on_actionExit_triggered();
 
+    void on_actionShow_Toolbar_triggered();
+
 private:
     void initMenu();
     void initStatusbar();
@@ -47,5 +49,7 @@ private:
     Ui::MainWindow *ui;
     MyOpenGLWidget *gl_widget;
     QString default_title;
+
+    QSpinBox *steps;
 };
 
