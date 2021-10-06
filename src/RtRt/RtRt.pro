@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     gl_objects/gl_plane.cpp \
     gl_objects/gl_triangulated_shape.cpp \
     main_window.cpp \
-    my_opengl_widget.cpp 
+    my_opengl_widget.cpp  \
+    util.cpp
 
 HEADERS  += \
     gl_objects/gl_buffer.h \
@@ -42,7 +43,10 @@ HEADERS  += \
     gl_objects/gl_shape.h \
     gl_objects/gl_triangulated_shape.h \
     main_window.h \
-    my_opengl_widget.h 
+    my_opengl_widget.h  \
+    objects/light_source.h \
+    objects/sphere.h \
+    util.h
 
 FORMS    += \
     main_window.ui 

@@ -1,4 +1,5 @@
 #include "my_opengl_widget.h"
+#include "util.h"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -16,7 +17,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setSamples(4);
+    format.setSamples(2);
     setFormat(format);
 }
 
@@ -25,26 +26,47 @@ void MyOpenGLWidget::initializeGL() {
 
     gl->glEnable(GL_MULTISAMPLE);
 
+    initScene();
     initView();
 
     program = loadProgram("shaders/raytrace.vert", "shaders/raytrace.frag");
 
-    plane = std::make_shared<GLPlane>();
+    plane = std::make_shared<GLPlane>(); // plane is in NDC already
     plane->attachVertices(program.get(), "vertex");
 
     emit initialized();
 }
 
+void MyOpenGLWidget::initScene() {
+    QVector3D red {0.3, 0.3, 1};
+    QVector3D blue {1, 0.3, 0.3};
+    QVector3D green {0.3, 1, 0.3};
+    QVector3D white {0.5, 0.5, 0.5};
+    QVector3D yellow {0.3, 1, 1};
+
+    objects.push_back(Sphere {{0, 2, 7}, 1, blue});
+    objects.push_back(Sphere {{-3, -2, 11}, 2, red});
+    objects.push_back(Sphere {{0, -2, 8}, 1, green});
+    objects.push_back(Sphere {{1.5, 0.5, 7}, 1, white});
+    objects.push_back(Sphere {{-2, 1, 6}, 0.7, yellow});
+    objects.push_back(Sphere {{2.2, 0, 8}, 1, white});
+    objects.push_back(Sphere {{4, 1, 10}, 0.7, red});
+
+    lights.push_back(LightSource {{-15, 0, -15}, white});
+    //lights.push_back(LightSource {{1, 1, 0}, blue});
+    //lights.push_back(LightSource {{0, -10, 6}, red});
+}
+
 void MyOpenGLWidget::initView() {
     model_matrix.setToIdentity();
 
-    view_matrix.setToIdentity();
-    view_matrix.ortho(-1, 1, -1, 1, 0, 1);
-    //view_matrix.lookAt(QVector3D(3.0f, 3.0f, 3.0f), QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
+    eye = QVector3D(0.0f, 0.0f, -10.0f);
+    view_matrix.setToIdentity();    
+    view_matrix.lookAt(eye, QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
 
     projection_matrix.setToIdentity();
     const auto aspect = float(width()) / float(height());
-    projection_matrix.perspective(45.0f, aspect, 0.01f, 100.0f);
+    projection_matrix.perspective(cameraFOV, aspect, 0.001f, 100.0f);
 }
 
 void MyOpenGLWidget::setBackgroundColor(QColor color) {
@@ -66,19 +88,42 @@ void MyOpenGLWidget::resizeGL(int width, int height) {
 void MyOpenGLWidget::paintGL() {
     auto *gl = context()->functions();
 
-    gl->glClearColor(static_cast<GLfloat>(background_color.redF()),
-                     static_cast<GLfloat>(background_color.greenF()),
-                     static_cast<GLfloat>(background_color.blueF()), 1.0f);
+    const auto bg_color = util::colorToVec(background_color);
+    gl->glClearColor(bg_color.x(), bg_color.y(), bg_color.z(), 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!program) {
         return;
     }
 
+    QMatrix4x4 rotate;
+    rotate.rotate(rotation_y_angle, QVector3D(0.0f, 1.0f, 0.0f));
+    rotate.rotate(rotation_x_angle, QVector3D(1.0f, 0.0f, 0.0f));
+
+    auto model_m = rotate * model_matrix;
+
     program->bind();
 
-    const auto mvp = projection_matrix * view_matrix * model_matrix;
-    program->setUniformValue(program->uniformLocation("MVP"), mvp);
+    const auto num_of_spheres = static_cast<int>(objects.size());
+    program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);
+    for (int i = 0; i < num_of_spheres; i++) {
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].position").arg(i)), model_m * objects[i].position);
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].radius").arg(i)), static_cast<GLfloat>(objects[i].radius));
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].color").arg(i)), objects[i].color);
+    }
+
+    const auto num_of_lights = static_cast<int>(lights.size());
+    program->setUniformValue(program->uniformLocation("numOfLightSources"), num_of_lights);
+    for (int i = 0; i < num_of_lights; i++) {
+        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].position").arg(i)), model_m * lights[i].position);
+        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].color").arg(i)), lights[i].color);
+    }
+
+    program->setUniformValue(program->uniformLocation("backgroundColor"), util::colorToVec(background_color));
+
+    program->setUniformValue(program->uniformLocation("camToWorld"), view_matrix.inverted());
+    program->setUniformValue(program->uniformLocation("windowSize"), QVector2D(width(), height()));
+    program->setUniformValue(program->uniformLocation("cameraFOV"), cameraFOV);
 
     plane->draw(gl);
 

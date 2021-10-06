@@ -1,5 +1,9 @@
 #pragma once
 
+#include "gl_objects/gl_plane.h"
+#include "objects/sphere.h"
+#include "objects/light_source.h"
+
 #include <QOpenGLWidget>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
@@ -8,8 +12,6 @@
 #include <QOpenGLShaderProgram>
 #include <QTimer>
 #include <memory>
-
-#include "gl_objects/gl_plane.h"
 
 class MyOpenGLWidget : public QOpenGLWidget {
     Q_OBJECT
@@ -36,6 +38,7 @@ protected:
 private:
     std::shared_ptr<QOpenGLShaderProgram> loadProgram(QString vertex_shader_file, QString fragment_shader_file);
 
+    void initScene();
     void initView();
 
     void onTimer();
@@ -44,12 +47,17 @@ private:
     std::shared_ptr<QOpenGLShaderProgram> program;
 
     QMatrix4x4 model_matrix, view_matrix, projection_matrix;
+    QVector3D eye;
+    float cameraFOV = 45.0f;
 
     float rotation_y_angle {0.0f}, rotation_x_angle {0.0f};
 
     QPoint mouse_pos {0, 0};
 
-    QColor background_color {0, 0, 25};
+    QColor background_color {0, 0, 0};
 
     std::shared_ptr<GLPlane> plane;
+
+    std::vector<Sphere> objects;
+    std::vector<LightSource> lights;
 };
