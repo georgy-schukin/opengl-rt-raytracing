@@ -84,3 +84,7 @@ void MainWindow::showError(QString message) {
 void MainWindow::on_actionShow_Toolbar_triggered() {
     ui->mainToolBar->setVisible(!ui->mainToolBar->isVisible());
 }
+
+void MainWindow::on_actionRandom_Scene_triggered() {
+    gl_widget->randomScene();
+}

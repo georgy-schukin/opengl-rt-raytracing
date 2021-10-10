@@ -35,6 +35,8 @@ private slots:
 
     void on_actionShow_Toolbar_triggered();
 
+    void on_actionRandom_Scene_triggered();
+
 private:
     void initMenu();
     void initStatusbar();

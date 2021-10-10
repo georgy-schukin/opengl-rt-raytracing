@@ -1,8 +1,7 @@
 #pragma once
 
 #include "gl_objects/gl_plane.h"
-#include "objects/sphere.h"
-#include "objects/light_source.h"
+#include "objects/scene.h"
 
 #include <QOpenGLWidget>
 #include <QOpenGLVertexArrayObject>
@@ -24,6 +23,8 @@ public:
 
     void setIterationLimit(int limit);
     int getIterationLimit() const;
+
+    void randomScene();
 
 signals:
     void initialized();
@@ -61,8 +62,7 @@ private:
 
     std::shared_ptr<GLPlane> plane;
 
-    std::vector<Sphere> objects;
-    std::vector<LightSource> lights;
+    Scene scene;
 
     int num_of_steps = 10;
 };

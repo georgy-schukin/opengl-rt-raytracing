@@ -13,7 +13,7 @@ struct LightSource
     vec3 color;
 };
 
-uniform Sphere spheres[10];
+uniform Sphere spheres[32];
 uniform LightSource lightSources[10];
 
 uniform int numOfSpheres;

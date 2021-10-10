@@ -9,6 +9,54 @@
 
 #include <cmath>
 #include <exception>
+#include <random>
+
+namespace {
+
+Scene defaultScene() {
+    QVector3D red {1, 0.3, 0.3};
+    QVector3D blue {0.3, 0.3, 1};
+    QVector3D green {0.3, 1, 0.3};
+    QVector3D white {0.8, 0.8, 0.8};
+    QVector3D yellow {1, 1, 0.3};
+    QVector3D purple {1, 0.3, 1};
+
+    Scene scene;
+    scene.addObject(Sphere {{0, 2, 1}, 1.5, blue});
+    scene.addObject(Sphere {{1, -2, 4}, 2, red});
+    scene.addObject(Sphere {{0, -2, -3}, 1, green});
+    scene.addObject(Sphere {{1.5, 0.5, -2}, 1, white});
+    scene.addObject(Sphere {{-2, 1, 5}, 0.7, yellow});
+    scene.addObject(Sphere {{-2.2, 0, 2}, 1, white});
+    scene.addObject(Sphere {{1, 1, 4}, 0.7, purple});
+
+    scene.addLight(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
+    scene.addLight(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
+    scene.addLight(LightSource {{0, -10, 6}, {1.0, 0.2, 0.2}});
+    return scene;
+}
+
+Scene randomScene(int num_of_objects) {
+    std::random_device rd;
+    std::mt19937 re(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    Scene scene;
+    const float max_p = 5.0f;
+    for (int i = 0; i < num_of_objects; i++) {
+        QVector3D pos {2 * max_p * dist(re) - max_p,
+                       2 * max_p * dist(re) - max_p,
+                       2 * max_p * dist(re) - max_p};
+        double radius {1.5f * dist(re) + 0.1f};
+        QVector3D color {dist(re), dist(re), dist(re)};
+        scene.addObject(Sphere {pos, radius, color});
+    }
+    scene.addLight(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
+    scene.addLight(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
+    scene.addLight(LightSource {{0, -10, 6}, {1.0, 0.2, 0.2}});
+    return scene;
+}
+
+}
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
     QOpenGLWidget(parent)
@@ -38,24 +86,7 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::initScene() {
-    QVector3D red {1, 0.3, 0.3};
-    QVector3D blue {0.3, 0.3, 1};
-    QVector3D green {0.3, 1, 0.3};
-    QVector3D white {0.8, 0.8, 0.8};
-    QVector3D yellow {1, 1, 0.3};
-    QVector3D purple {1, 0.3, 1};
-
-    objects.push_back(Sphere {{0, 2, 1}, 1.5, blue});
-    objects.push_back(Sphere {{1, -2, 4}, 2, red});
-    objects.push_back(Sphere {{0, -2, -3}, 1, green});
-    objects.push_back(Sphere {{1.5, 0.5, -2}, 1, white});
-    objects.push_back(Sphere {{-2, 1, 5}, 0.7, yellow});
-    objects.push_back(Sphere {{-2.2, 0, 2}, 1, white});
-    objects.push_back(Sphere {{1, 1, 4}, 0.7, purple});
-
-    lights.push_back(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
-    lights.push_back(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
-    lights.push_back(LightSource {{0, -10, 6}, {1.0, 0.2, 0.2}});
+    scene = defaultScene();
 }
 
 void MyOpenGLWidget::initView() {
@@ -114,19 +145,23 @@ void MyOpenGLWidget::paintGL() {
 
     program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);
 
-    const auto num_of_spheres = static_cast<int>(objects.size());
+    const auto num_of_spheres = static_cast<int>(scene.objects.size());
     program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);
-    for (int i = 0; i < num_of_spheres; i++) {
-        program->setUniformValue(program->uniformLocation(QString("spheres[%1].position").arg(i)), model_m * objects[i].position);
-        program->setUniformValue(program->uniformLocation(QString("spheres[%1].radius").arg(i)), static_cast<GLfloat>(objects[i].radius));
-        program->setUniformValue(program->uniformLocation(QString("spheres[%1].color").arg(i)), objects[i].color);
+    int cnt = 0;
+    for (const auto &s: scene.objects) {
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].position").arg(cnt)), model_m * s.position);
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].radius").arg(cnt)), static_cast<GLfloat>(s.radius));
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].color").arg(cnt)), s.color);
+        cnt++;
     }
 
-    const auto num_of_lights = static_cast<int>(lights.size());
+    cnt = 0;
+    const auto num_of_lights = static_cast<int>(scene.lights.size());
     program->setUniformValue(program->uniformLocation("numOfLightSources"), num_of_lights);
-    for (int i = 0; i < num_of_lights; i++) {
-        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].position").arg(i)), model_m * lights[i].position);
-        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].color").arg(i)), lights[i].color);
+    for (const auto &l: scene.lights) {
+        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].position").arg(cnt)), model_m * l.position);
+        program->setUniformValue(program->uniformLocation(QString("lightSources[%1].color").arg(cnt)), l.color);
+        cnt++;
     }
 
     program->setUniformValue(program->uniformLocation("backgroundColor"), util::colorToVec(background_color));
@@ -178,5 +213,10 @@ void MyOpenGLWidget::wheelEvent(QWheelEvent *event) {
     const auto coeff = (event->angleDelta().y() > 0 ? 0.5f : -0.5f);
     eye += coeff * QVector3D(1, 1, 1);
     initView();
+    update();
+}
+
+void MyOpenGLWidget::randomScene() {
+    scene = ::randomScene(32);
     update();
 }
