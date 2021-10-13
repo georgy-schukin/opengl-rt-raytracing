@@ -92,7 +92,7 @@ void MyOpenGLWidget::initScene() {
 void MyOpenGLWidget::initView() {
     model_matrix.setToIdentity();
 
-    view_matrix.setToIdentity();    
+    view_matrix.setToIdentity();
     view_matrix.lookAt(eye, QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f));
 
     projection_matrix.setToIdentity();

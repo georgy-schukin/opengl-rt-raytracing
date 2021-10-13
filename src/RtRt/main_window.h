@@ -37,6 +37,8 @@ private slots:
 
     void on_actionRandom_Scene_triggered();
 
+    void on_actionBackground_Color_triggered();
+
 private:
     void initMenu();
     void initStatusbar();

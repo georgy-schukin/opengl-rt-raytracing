@@ -63,6 +63,7 @@
     <property name="title">
      <string>Settings</string>
     </property>
+    <addaction name="actionBackground_Color"/>
     <addaction name="actionShow_Toolbar"/>
    </widget>
    <addaction name="menuFrame"/>
@@ -105,6 +106,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionBackground_Color">
+   <property name="text">
+    <string>Background Color...</string>
    </property>
   </action>
  </widget>

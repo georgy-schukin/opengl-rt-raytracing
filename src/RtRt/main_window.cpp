@@ -88,3 +88,13 @@ void MainWindow::on_actionShow_Toolbar_triggered() {
 void MainWindow::on_actionRandom_Scene_triggered() {
     gl_widget->randomScene();
 }
+
+void MainWindow::on_actionBackground_Color_triggered() {
+    QColor color = QColorDialog::getColor(gl_widget->getBackgroundColor(), this,
+                                          "Choose background color",
+                                          QColorDialog::DontUseNativeDialog);
+    if (color.isValid()) {
+        gl_widget->setBackgroundColor(color);
+        gl_widget->update();
+    }
+}
