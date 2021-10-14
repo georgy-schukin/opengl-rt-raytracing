@@ -25,7 +25,7 @@ uniform int numOfSteps = 1;
 
 uniform vec3 backgroundColor = vec3(0.0);
 
-bool intersectSphere(Sphere sphere, vec3 startPoint, vec3 ray, out vec3 intersectionPoint) {
+bool intersectSphere(Sphere sphere, vec3 startPoint, vec3 ray, out float intersectionDistance) {
     vec3 v = startPoint - sphere.position;
     float d = dot(v, ray);
     float discriminant = d * d - (dot(v, v) - sphere.radius * sphere.radius);
@@ -51,7 +51,7 @@ bool intersectSphere(Sphere sphere, vec3 startPoint, vec3 ray, out vec3 intersec
         t = (t1 > t2) ? t2 : t1;
     }
 
-    intersectionPoint = ray * t + startPoint;
+    intersectionDistance = t;
     return true;
 }
 
@@ -59,16 +59,16 @@ int getIntersection(vec3 startPoint, vec3 ray, out vec3 closestIntersectionPoint
     int closestObject = -1;
     float minDistance = 1e+8;
     for (int i = 0; i < numOfSpheres; i++) {
-        vec3 intersectionPoint;
-        if (intersectSphere(spheres[i], startPoint, ray, intersectionPoint)) {
-            vec3 dir = intersectionPoint - startPoint;
-            float distance = dot(dir, dir);
-            if (distance < minDistance) {
-                closestObject = i;
-                closestIntersectionPoint = intersectionPoint;
-                minDistance = distance;
+        float intersectionDistance;
+        if (intersectSphere(spheres[i], startPoint, ray, intersectionDistance)) {
+            if (intersectionDistance < minDistance) {
+                closestObject = i;               
+                minDistance = intersectionDistance;
             }
         }
+    }
+    if (closestObject != -1) {
+        closestIntersectionPoint = startPoint + minDistance * ray;
     }
     return closestObject;
 }
