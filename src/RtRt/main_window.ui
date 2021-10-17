@@ -50,6 +50,8 @@
     </property>
     <addaction name="separator"/>
     <addaction name="actionRandom_Scene"/>
+    <addaction name="actionAdd_Random_Object"/>
+    <addaction name="actionClear_Scene"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -111,6 +113,22 @@
   <action name="actionBackground_Color">
    <property name="text">
     <string>Background Color...</string>
+   </property>
+  </action>
+  <action name="actionAdd_Random_Object">
+   <property name="text">
+    <string>Add Random Object</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionClear_Scene">
+   <property name="text">
+    <string>Clear Scene</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
  </widget>

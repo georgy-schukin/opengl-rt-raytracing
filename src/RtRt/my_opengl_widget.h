@@ -38,6 +38,8 @@ public:
     SamplingMode getSamplingMode() const;
 
     void randomScene();
+    void clearScene();
+    void addRandomObject();
 
 signals:
     void initialized();

@@ -17,6 +17,10 @@ public:
         lights.push_back(l);
     }
 
+    void clear() {
+        objects.clear();
+    }
+
 public:
     std::vector<Sphere> objects;
     std::vector<LightSource> lights;

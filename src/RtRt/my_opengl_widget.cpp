@@ -295,6 +295,22 @@ void MyOpenGLWidget::wheelEvent(QWheelEvent *event) {
 }
 
 void MyOpenGLWidget::randomScene() {
-    scene = ::randomScene(32);
-    update();
+    scene = ::randomScene(32);    
+}
+
+void MyOpenGLWidget::clearScene() {
+    scene.clear();
+}
+
+void MyOpenGLWidget::addRandomObject() {
+    std::random_device rd;
+    std::mt19937 re(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    const float max_p = 5.0f;
+    QVector3D pos {2 * max_p * dist(re) - max_p,
+                   2 * max_p * dist(re) - max_p,
+                   2 * max_p * dist(re) - max_p};
+    double radius {1.5f * dist(re) + 0.1f};
+    QVector3D color {dist(re), dist(re), dist(re)};
+    scene.addObject(Sphere {pos, radius, color});
 }

@@ -40,6 +40,10 @@ private slots:
 
     void on_actionBackground_Color_triggered();
 
+    void on_actionClear_Scene_triggered();
+
+    void on_actionAdd_Random_Object_triggered();
+
 private:
     void initMenu();
     void initStatusbar();

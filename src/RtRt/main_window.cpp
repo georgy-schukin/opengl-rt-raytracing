@@ -110,6 +110,7 @@ void MainWindow::on_actionShow_Toolbar_triggered() {
 
 void MainWindow::on_actionRandom_Scene_triggered() {
     gl_widget->randomScene();
+    gl_widget->update();
 }
 
 void MainWindow::on_actionBackground_Color_triggered() {
@@ -120,4 +121,14 @@ void MainWindow::on_actionBackground_Color_triggered() {
         gl_widget->setBackgroundColor(color);
         gl_widget->update();
     }
+}
+
+void MainWindow::on_actionClear_Scene_triggered() {
+    gl_widget->clearScene();
+    gl_widget->update();
+}
+
+void MainWindow::on_actionAdd_Random_Object_triggered() {
+    gl_widget->addRandomObject();
+    gl_widget->update();
 }
