@@ -61,10 +61,21 @@ void MainWindow::initToolbar() {
         gl_widget->update();
     });
 
+    sampling_mode = new QComboBox(this);
+    sampling_mode->addItem("Random", MyOpenGLWidget::SamplingMode::SM_RANDOM);
+    sampling_mode->addItem("Multi Jittered", MyOpenGLWidget::SamplingMode::SM_MULTIJITTERED);
+    sampling_mode->setCurrentIndex((int)gl_widget->getSamplingMode());
+    connect(sampling_mode, qOverload<int>(&QComboBox::currentIndexChanged), [this](int index) {
+        gl_widget->setSamplingMode(static_cast<MyOpenGLWidget::SamplingMode>(index));
+        gl_widget->update();
+    });
+
     ui->mainToolBar->addWidget(new QLabel("Steps: ", this));
     ui->mainToolBar->addWidget(steps);
     ui->mainToolBar->addWidget(new QLabel("Samples: ", this));
     ui->mainToolBar->addWidget(samples);
+    ui->mainToolBar->addWidget(new QLabel("Sampling: ", this));
+    ui->mainToolBar->addWidget(sampling_mode);
 }
 
 void MainWindow::initGlWidget() {

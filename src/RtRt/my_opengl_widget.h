@@ -15,6 +15,13 @@
 class MyOpenGLWidget : public QOpenGLWidget {
     Q_OBJECT
 
+
+public:
+    enum SamplingMode : int {
+        SM_RANDOM = 0,
+        SM_MULTIJITTERED = 1
+    };
+
 public:
     explicit MyOpenGLWidget(QWidget *parent=nullptr);
 
@@ -26,6 +33,9 @@ public:
 
     void setNumOfSamples(int num);
     int getNumOfSamples() const;
+
+    void setSamplingMode(SamplingMode mode);
+    SamplingMode getSamplingMode() const;
 
     void randomScene();
 
@@ -70,6 +80,7 @@ private:
 
     int num_of_steps = 10;
     int num_of_samples = 1;
+    SamplingMode sampling_mode = SM_RANDOM;
 
     QOpenGLTexture jitter;
     int jitter_size = 1;

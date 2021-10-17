@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QSlider>
 #include <QSpinBox>
+#include <QComboBox>
 
 #include <vector>
 #include <memory>
@@ -56,5 +57,6 @@ private:
 
     QSpinBox *steps;
     QSpinBox *samples;
+    QComboBox *sampling_mode;
 };
 

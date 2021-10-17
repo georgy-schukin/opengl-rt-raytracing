@@ -156,6 +156,7 @@ uniform sampler1D randoms;
 uniform int randomsSize;
 
 uniform int numOfSamples = 1;
+uniform int samplingMode = 0;
 
 out vec4 fragColor;
 
@@ -189,13 +190,22 @@ void main()
         color = shoot(gl_FragCoord.xy, aspect, viewPoint);
     } else {
         seed(int(gl_FragCoord.x * windowSize.y + gl_FragCoord.y));
-        for (int i = 0; i < numOfSamples; i++)
-        for (int j = 0; j < numOfSamples; j++) {
-            float dx = (i + rand()) / numOfSamples;
-            float dy = (j + rand()) / numOfSamples;
-            color += shoot(gl_FragCoord.xy - vec2(0.5) + vec2(dx, dy), aspect, viewPoint);
+        if (samplingMode == 0) {
+            for (int i = 0; i < numOfSamples; i++) {
+                float dx = rand();
+                float dy = rand();
+                color += shoot(gl_FragCoord.xy - vec2(0.5) + vec2(dx, dy), aspect, viewPoint);
+            }
+            color /= numOfSamples;
+        } else {
+            for (int i = 0; i < numOfSamples; i++)
+            for (int j = 0; j < numOfSamples; j++) {
+                float dx = (i + rand()) / numOfSamples;
+                float dy = (j + rand()) / numOfSamples;
+                color += shoot(gl_FragCoord.xy - vec2(0.5) + vec2(dx, dy), aspect, viewPoint);
+            }
+            color /= (numOfSamples * numOfSamples);
         }
-        color /= (numOfSamples * numOfSamples);
         /*int jx = int(gl_FragCoord.x) % (jitterSize * numOfSamples);
         int jy = int(gl_FragCoord.y) % (jitterSize * numOfSamples);
         vec2 start = gl_FragCoord.xy / (jitterSize * numOfSamples);

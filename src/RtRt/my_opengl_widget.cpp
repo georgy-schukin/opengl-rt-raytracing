@@ -173,6 +173,14 @@ int MyOpenGLWidget::getNumOfSamples() const {
     return num_of_samples;
 }
 
+void MyOpenGLWidget::setSamplingMode(MyOpenGLWidget::SamplingMode mode) {
+    sampling_mode = mode;
+}
+
+MyOpenGLWidget::SamplingMode MyOpenGLWidget::getSamplingMode() const {
+    return sampling_mode;
+}
+
 void MyOpenGLWidget::resizeGL(int width, int height) {
     auto *gl = context()->functions();
 
@@ -212,6 +220,7 @@ void MyOpenGLWidget::paintGL() {
     program->setUniformValue(program->uniformLocation("randomsSize"), randoms_size);
 
     program->setUniformValue(program->uniformLocation("numOfSamples"), num_of_samples);
+    program->setUniformValue(program->uniformLocation("samplingMode"), int(sampling_mode));
     program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);    
 
     const auto num_of_spheres = static_cast<int>(scene.objects.size());
