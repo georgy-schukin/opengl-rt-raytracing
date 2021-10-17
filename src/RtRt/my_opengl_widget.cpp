@@ -59,23 +59,27 @@ Scene randomScene(int num_of_objects) {
 }
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
-    QOpenGLWidget(parent)
+    QOpenGLWidget(parent),
+    jitter(QOpenGLTexture::Target2D),
+    randoms(QOpenGLTexture::Target1D)
 {
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setSamples(4);
+    format.setSamples(1);
     setFormat(format);
 }
 
 void MyOpenGLWidget::initializeGL() {
     auto *gl = context()->functions();
 
-    gl->glEnable(GL_MULTISAMPLE);
+    gl->glDisable(GL_MULTISAMPLE);
+    gl->glDisable(GL_DEPTH_TEST);
 
     initScene();
     initView();
+    initTextures();
 
     program = loadProgram("shaders/raytrace.vert", "shaders/raytrace.frag");
 
@@ -100,6 +104,51 @@ void MyOpenGLWidget::initView() {
     projection_matrix.perspective(cameraFOV, aspect, 0.001f, 100.0f);
 }
 
+std::vector<QVector2D> jitter2D(int size) {
+    std::vector<QVector2D> jitter;
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<GLfloat> dist(0.0f, 1.0f);
+    for (int i = 0; i < size; i++)
+    for (int j = 0; j < size; j++) {
+        float x = (i + dist(mt)) / size;
+        float y = (j + dist(mt)) / size;
+        jitter.push_back(QVector2D(x, y));
+    }
+    return jitter;
+}
+
+std::vector<float> randoms1D(int size) {
+    std::vector<float> randoms;
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    for (int i = 0; i < size; i++) {
+        randoms.push_back(dist(mt));
+    }
+    return randoms;
+}
+
+void MyOpenGLWidget::initTextures() {
+    jitter_size = 256;
+    jitter.setSize(jitter_size, jitter_size);
+    jitter.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    jitter.setWrapMode(QOpenGLTexture::Repeat);
+    jitter.setFormat(QOpenGLTexture::RG32F);
+    jitter.allocateStorage();
+    const auto jitter_data = jitter2D(jitter_size);
+    jitter.setData(QOpenGLTexture::RG, QOpenGLTexture::Float32, jitter_data.data());
+
+    randoms_size = 4096;
+    randoms.setSize(randoms_size);
+    randoms.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
+    randoms.setWrapMode(QOpenGLTexture::Repeat);
+    randoms.setFormat(QOpenGLTexture::R32F);
+    randoms.allocateStorage();
+    const auto randoms_data = randoms1D(randoms_size);
+    randoms.setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, randoms_data.data());
+}
+
 void MyOpenGLWidget::setBackgroundColor(QColor color) {
     background_color = color;
 }
@@ -116,6 +165,14 @@ int MyOpenGLWidget::getIterationLimit() const {
     return num_of_steps;
 }
 
+void MyOpenGLWidget::setNumOfSamples(int num) {
+    num_of_samples = num;
+}
+
+int MyOpenGLWidget::getNumOfSamples() const {
+    return num_of_samples;
+}
+
 void MyOpenGLWidget::resizeGL(int width, int height) {
     auto *gl = context()->functions();
 
@@ -129,11 +186,11 @@ void MyOpenGLWidget::paintGL() {
 
     const auto bg_color = util::colorToVec(background_color);
     gl->glClearColor(bg_color.x(), bg_color.y(), bg_color.z(), 1.0f);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
 
     if (!program) {
         return;
-    }
+    }    
 
     QMatrix4x4 rotate;
     rotate.rotate(rotation_y_angle, QVector3D(0.0f, 1.0f, 0.0f));
@@ -143,7 +200,19 @@ void MyOpenGLWidget::paintGL() {
 
     program->bind();
 
-    program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);
+    gl->glActiveTexture(GL_TEXTURE0);
+    program->setUniformValue(program->uniformLocation("jitter"), 0);
+    jitter.bind();
+
+    gl->glActiveTexture(GL_TEXTURE1);
+    program->setUniformValue(program->uniformLocation("randoms"), 1);
+    randoms.bind();
+
+    program->setUniformValue(program->uniformLocation("jitterSize"), jitter_size);
+    program->setUniformValue(program->uniformLocation("randomsSize"), randoms_size);
+
+    program->setUniformValue(program->uniformLocation("numOfSamples"), num_of_samples);
+    program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);    
 
     const auto num_of_spheres = static_cast<int>(scene.objects.size());
     program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);

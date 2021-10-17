@@ -24,6 +24,9 @@ public:
     void setIterationLimit(int limit);
     int getIterationLimit() const;
 
+    void setNumOfSamples(int num);
+    int getNumOfSamples() const;
+
     void randomScene();
 
 signals:
@@ -44,6 +47,7 @@ private:
 
     void initScene();
     void initView();
+    void initTextures();
 
     void onTimer();
 
@@ -65,4 +69,11 @@ private:
     Scene scene;
 
     int num_of_steps = 10;
+    int num_of_samples = 1;
+
+    QOpenGLTexture jitter;
+    int jitter_size = 1;
+
+    QOpenGLTexture randoms;
+    int randoms_size= 1;
 };

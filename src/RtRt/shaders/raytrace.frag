@@ -149,18 +149,63 @@ uniform vec2 windowSize;
 uniform float cameraFOV;
 uniform float fovTangent;
 
+uniform sampler2D jitter;
+uniform int jitterSize;
+
+uniform sampler1D randoms;
+uniform int randomsSize;
+
+uniform int numOfSamples = 1;
+
 out vec4 fragColor;
+
+int currRand = 0;
+
+void seed(int seed) {
+    currRand = seed;
+}
+
+float rand() {
+    float value = texture(randoms, float(currRand) / float(randomsSize)).r;
+    currRand++;
+    return value;
+}
+
+vec3 shoot(vec2 fragCoord, float aspect, vec3 viewPoint) {
+    float px = (2 * (fragCoord.x + 0.5) / windowSize.x - 1) * fovTangent * aspect;
+    float py = (2 * (fragCoord.y + 0.5) / windowSize.y - 1) * fovTangent;
+    vec3 posWorld = vec4(camToWorld * vec4(px, py, -1, 1)).xyz;
+    vec3 ray = normalize(posWorld - viewPoint);
+    vec3 color = getIllumination(viewPoint, ray);
+    return color;
+}
 
 void main()
 {
     float aspect = windowSize.x / windowSize.y; // assuming width > height
-    vec2 pixelPos = gl_FragCoord.xy;
-    float px = (2 * (pixelPos.x + 0.5) / windowSize.x - 1) * fovTangent * aspect;
-    float py = (2 * (pixelPos.y + 0.5) / windowSize.y - 1) * fovTangent;
     vec3 viewPoint = vec4(camToWorld * vec4(0, 0, 0, 1)).xyz;
-    vec3 posWorld = vec4(camToWorld * vec4(px, py, -1, 1)).xyz;
-    vec3 ray = normalize(posWorld - viewPoint);
-    vec3 color = getIllumination(viewPoint, ray);
-    color = clamp(color, vec3(0), vec3(1));
-    fragColor = vec4(color, 1.0f);
+    vec3 color = vec3(0);
+    if (numOfSamples == 1) {
+        color = shoot(gl_FragCoord.xy, aspect, viewPoint);
+    } else {
+        seed(int(gl_FragCoord.x * windowSize.y + gl_FragCoord.y));
+        for (int i = 0; i < numOfSamples; i++)
+        for (int j = 0; j < numOfSamples; j++) {
+            float dx = (i + rand()) / numOfSamples;
+            float dy = (j + rand()) / numOfSamples;
+            color += shoot(gl_FragCoord.xy - vec2(0.5) + vec2(dx, dy), aspect, viewPoint);
+        }
+        color /= (numOfSamples * numOfSamples);
+        /*int jx = int(gl_FragCoord.x) % (jitterSize * numOfSamples);
+        int jy = int(gl_FragCoord.y) % (jitterSize * numOfSamples);
+        vec2 start = gl_FragCoord.xy / (jitterSize * numOfSamples);
+        for (int i = 0; i < numOfSamples; i++)
+        for (int j = 0; j < numOfSamples; j++) {
+            vec2 jit = texture(jitter, start + vec2(i, j) / jitterSize).rg;
+            jit = (jit * jitterSize - vec2(jx, jy)) / numOfSamples;
+            color += shoot(gl_FragCoord.xy - vec2(0.5) + jit, aspect, viewPoint);
+        }*/
+    }
+    fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1.0f);
+    //fragColor = vec4(pixelPos.x - int(pixelPos.x), pixelPos.y - int(pixelPos.y), 0, 1);
 }

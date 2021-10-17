@@ -44,15 +44,27 @@ void MainWindow::initToolbar() {
     steps = new QSpinBox(this);
     steps->setMinimum(1);
     steps->setMaximum(1000);
-    steps->setFocusPolicy(Qt::TabFocus);
+    //steps->setFocusPolicy(Qt::TabFocus);
     steps->setValue(gl_widget->getIterationLimit());
     connect(steps, qOverload<int>(&QSpinBox::valueChanged), [this](int value) {
         gl_widget->setIterationLimit(value);
         gl_widget->update();
     });
 
+    samples = new QSpinBox(this);
+    samples->setMinimum(1);
+    samples->setMaximum(1000);
+    //samples->setFocusPolicy(Qt::TabFocus);
+    samples->setValue(gl_widget->getNumOfSamples());
+    connect(samples, qOverload<int>(&QSpinBox::valueChanged), [this](int value) {
+        gl_widget->setNumOfSamples(value);
+        gl_widget->update();
+    });
+
     ui->mainToolBar->addWidget(new QLabel("Steps: ", this));
     ui->mainToolBar->addWidget(steps);
+    ui->mainToolBar->addWidget(new QLabel("Samples: ", this));
+    ui->mainToolBar->addWidget(samples);
 }
 
 void MainWindow::initGlWidget() {

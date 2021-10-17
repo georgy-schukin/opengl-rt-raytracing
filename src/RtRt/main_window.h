@@ -55,5 +55,6 @@ private:
     QString default_title;
 
     QSpinBox *steps;
+    QSpinBox *samples;
 };
 
