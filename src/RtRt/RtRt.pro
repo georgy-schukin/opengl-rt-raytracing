@@ -45,6 +45,7 @@ HEADERS  += \
     main_window.h \
     my_opengl_widget.h  \
     objects/light_source.h \
+    objects/material.h \
     objects/scene.h \
     objects/sphere.h \
     util.h
