@@ -22,13 +22,21 @@ Scene defaultScene() {
     QVector3D purple {1, 0.3, 1};
 
     Scene scene;
-    scene.addObject(Sphere {{0, 2, 1}, 1.5, blue});
-    scene.addObject(Sphere {{1, -2, 4}, 2, red});
-    scene.addObject(Sphere {{0, -2, -3}, 1, green});
-    scene.addObject(Sphere {{1.5, 0.5, -2}, 1, white});
-    scene.addObject(Sphere {{-2, 1, 5}, 0.7, yellow});
-    scene.addObject(Sphere {{-2.2, 0, 2}, 1, white});
-    scene.addObject(Sphere {{1, 1, 4}, 0.7, purple});
+
+    auto redMat = scene.addMaterial(Material {red * 0.4, red * 0.6, 250});
+    auto blueMat = scene.addMaterial(Material {blue * 0.4, blue * 0.6, 50});
+    auto greenMat = scene.addMaterial(Material {green * 0.8, green * 0.2, 10});
+    auto whiteMat = scene.addMaterial(Material {white * 0.9, white * 0.1, 50});
+    auto yellowMat = scene.addMaterial(Material {yellow * 0.1,yellow * 0.9, 500});
+    auto purpleMat = scene.addMaterial(Material {purple * 0.6, purple * 0.4, 30});
+
+    scene.addObject(Sphere {{0, 2, 1}, 1.5, blueMat});
+    scene.addObject(Sphere {{1, -2, 4}, 2, redMat});
+    scene.addObject(Sphere {{0, -2, -3}, 1, greenMat});
+    scene.addObject(Sphere {{1.5, 0.5, -2}, 1, whiteMat});
+    scene.addObject(Sphere {{-2, 1, 5}, 0.7, yellowMat});
+    scene.addObject(Sphere {{-2.2, 0, 2}, 1, whiteMat});
+    scene.addObject(Sphere {{1, 1, 4}, 0.7, purpleMat});
 
     scene.addLight(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
     scene.addLight(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
@@ -36,19 +44,24 @@ Scene defaultScene() {
     return scene;
 }
 
-Scene randomScene(int num_of_objects) {
+void addRandomObject(Scene &scene, float max_pos = 5.0f, float min_rad = 0.2f, float max_rad = 1.5f) {
     std::random_device rd;
     std::mt19937 re(rd());
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-    Scene scene;
-    const float max_p = 5.0f;
+    QVector3D pos {2 * max_pos * dist(re) - max_pos,
+                   2 * max_pos * dist(re) - max_pos,
+                   2 * max_pos * dist(re) - max_pos};
+    double radius {(max_rad - min_rad) * dist(re) + min_rad};
+    QVector3D color {dist(re), dist(re), dist(re)};
+    auto coeff = dist(re);
+    auto material = scene.addMaterial(Material {color * coeff, color * (1.0 - coeff), dist(re) * 1000});
+    scene.addObject(Sphere {pos, radius, material});
+}
+
+Scene randomScene(int num_of_objects) {
+    Scene scene;    
     for (int i = 0; i < num_of_objects; i++) {
-        QVector3D pos {2 * max_p * dist(re) - max_p,
-                       2 * max_p * dist(re) - max_p,
-                       2 * max_p * dist(re) - max_p};
-        double radius {1.5f * dist(re) + 0.1f};
-        QVector3D color {dist(re), dist(re), dist(re)};
-        scene.addObject(Sphere {pos, radius, color});
+        addRandomObject(scene);
     }
     scene.addLight(LightSource {{-15, 15, -15}, {1.0, 1.0, 1.0}});
     scene.addLight(LightSource {{1, 1, 0}, {0.2, 0.2, 1.0}});
@@ -229,7 +242,7 @@ void MyOpenGLWidget::paintGL() {
     for (const auto &s: scene.objects) {
         program->setUniformValue(program->uniformLocation(QString("spheres[%1].position").arg(cnt)), model_m * s.position);
         program->setUniformValue(program->uniformLocation(QString("spheres[%1].radius").arg(cnt)), static_cast<GLfloat>(s.radius));
-        program->setUniformValue(program->uniformLocation(QString("spheres[%1].color").arg(cnt)), s.color);
+        program->setUniformValue(program->uniformLocation(QString("spheres[%1].materialId").arg(cnt)), s.materialId);
         cnt++;
     }
 
@@ -239,6 +252,14 @@ void MyOpenGLWidget::paintGL() {
     for (const auto &l: scene.lights) {
         program->setUniformValue(program->uniformLocation(QString("lightSources[%1].position").arg(cnt)), model_m * l.position);
         program->setUniformValue(program->uniformLocation(QString("lightSources[%1].color").arg(cnt)), l.color);
+        cnt++;
+    }
+
+    cnt = 0;
+    for (const auto &m: scene.materials) {
+        program->setUniformValue(program->uniformLocation(QString("materials[%1].diffuse").arg(cnt)), m.diffuse);
+        program->setUniformValue(program->uniformLocation(QString("materials[%1].specular").arg(cnt)), m.specular);
+        program->setUniformValue(program->uniformLocation(QString("materials[%1].shininess").arg(cnt)), m.shininess);
         cnt++;
     }
 
@@ -303,14 +324,5 @@ void MyOpenGLWidget::clearScene() {
 }
 
 void MyOpenGLWidget::addRandomObject() {
-    std::random_device rd;
-    std::mt19937 re(rd());
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-    const float max_p = 5.0f;
-    QVector3D pos {2 * max_p * dist(re) - max_p,
-                   2 * max_p * dist(re) - max_p,
-                   2 * max_p * dist(re) - max_p};
-    double radius {1.5f * dist(re) + 0.1f};
-    QVector3D color {dist(re), dist(re), dist(re)};
-    scene.addObject(Sphere {pos, radius, color});
+    ::addRandomObject(scene);
 }

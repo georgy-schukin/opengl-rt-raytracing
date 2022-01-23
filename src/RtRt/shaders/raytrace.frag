@@ -4,7 +4,7 @@ struct Sphere
 {
     vec3 position;
     float radius;
-    vec3 color;
+    int materialId;
 };
 
 struct LightSource
@@ -13,8 +13,15 @@ struct LightSource
     vec3 color;
 };
 
-uniform Sphere spheres[32];
-uniform LightSource lightSources[10];
+struct Material {
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+};
+
+uniform Sphere spheres[256];
+uniform LightSource lightSources[256];
+uniform Material materials[256];
 
 uniform int numOfSpheres;
 uniform int numOfLightSources;
@@ -73,43 +80,56 @@ int getIntersection(vec3 startPoint, vec3 ray, out vec3 closestIntersectionPoint
     return closestObject;
 }
 
+vec3 shade(Material mat, vec3 lightColor, vec3 normal, vec3 reflected, vec3 toLight, vec3 toViewer) {
+    float diffuseCoeff = max(dot(toLight, normal), 0.0);
+    float specularCoeff = 0.0;
+    if (diffuseCoeff > 0.0 && mat.shininess > 0.0) {
+        specularCoeff = pow(max(dot(reflected, toViewer), 0.0), mat.shininess);
+    }
+    return (mat.diffuse * diffuseCoeff + mat.specular * specularCoeff) * lightColor;
+}
+
 bool nextIntersection(vec3 point, vec3 ray, int step, out vec3 color, out vec3 intersectionPoint, out vec3 reflectedRay, out Sphere sphere) {
     color = vec3(0.0);
     // Find an object we a looking at
     int closestObject = getIntersection(point, ray, intersectionPoint);
     if (closestObject == -1) {
-        color = (step == 0 ? backgroundColor : vec3(0));
+        color = backgroundColor;
         return false;
     }
 
     sphere = spheres[closestObject];
+    Material material = materials[sphere.materialId];
     //return closestSphere.color;
 
     vec3 normal = normalize(intersectionPoint - sphere.position);
-    reflectedRay = ray - 2 * dot(normal, ray) * normal;
+    vec3 toViewer = -ray;
+    float cosThetaI = dot(normal, toViewer);
+    reflectedRay = 2 * cosThetaI * normal - toViewer;
 
-    for(int i = 0; i < numOfLightSources; i++) {
-        // Check if the point on the object is illuminated
-        vec3 shadowRay = lightSources[i].position - intersectionPoint;
-        float lightDistance = length(shadowRay);
-        shadowRay = normalize(shadowRay);
+    // Add illumination from each light.
+    for (int i = 0; i < numOfLightSources; i++) {
+        // Check if the point on the object is illuminated by this light (not obscured by an obstacle).
+        vec3 toLight = lightSources[i].position - intersectionPoint;
+        float distanceToLight = length(toLight);
+        toLight = normalize(toLight);
         vec3 intersectionLightPoint;
-        // Optimization potential: do not need closest object here, just check for an obstacle
-        int obstacle = getIntersection(intersectionPoint, shadowRay, intersectionLightPoint);
+        int obstacle = getIntersection(intersectionPoint, toLight, intersectionLightPoint);
         if (obstacle != -1) {
-            // Check if light is closer then the intersected object
-            if (length(intersectionLightPoint - intersectionPoint) > lightDistance) {
+            // Check if the light is closer then the intersected object.
+            float distanceToObstacle = length(intersectionLightPoint - intersectionPoint);
+            if (distanceToObstacle > distanceToLight) {
                 obstacle = -1;
             }
         }
         if (obstacle == -1) {
-            // Reflection
-            // Apply coefficients of the body color to the intensity of the light source
-            color += lightSources[i].color * sphere.color * max(0.0, dot(reflectedRay, shadowRay));
+            // Apply coefficients of the body color to the intensity of the light source.
+            color += shade(material, lightSources[i].color, normal, reflectedRay, toLight, toViewer);
         }
     }
+
     // Apply ambient light
-    color += ambientLight * sphere.color;
+    color += ambientLight * material.diffuse;
     return true;
 }
 
@@ -132,7 +152,7 @@ vec3 getIllumination(vec3 point, vec3 ray) {
             totalColor += currMult * color;
             currPoint = intersectionPoint;
             currRay = reflectedRay;
-            currMult *= sphere.color;
+            currMult *= materials[sphere.materialId].specular;
         }
 
         //if (recursionStep < numOfSteps) {
