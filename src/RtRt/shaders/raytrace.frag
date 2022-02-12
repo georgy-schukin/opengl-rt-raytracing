@@ -208,7 +208,7 @@ vec3 getIlluminationFull(vec3 point, vec3 ray) {
     curr.point = point;
     curr.ray = ray;
     curr.coeff = vec3(1.0);
-    curr.depth = 0;
+    curr.depth = 1;
     curr.parent = -1;
     curr.shootRay = true;
 

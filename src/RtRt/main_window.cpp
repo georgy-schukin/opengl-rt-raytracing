@@ -87,7 +87,7 @@ void MainWindow::initToolbar() {
         appSettings.setValue(SAMPLING_MODE, index);
     });
 
-    ui->mainToolBar->addWidget(new QLabel("Steps: ", this));
+    ui->mainToolBar->addWidget(new QLabel("Max depth: ", this));
     ui->mainToolBar->addWidget(steps);
     ui->mainToolBar->addWidget(new QLabel("Samples: ", this));
     ui->mainToolBar->addWidget(samples);
