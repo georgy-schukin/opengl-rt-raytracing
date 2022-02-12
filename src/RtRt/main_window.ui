@@ -66,6 +66,7 @@
      <string>Settings</string>
     </property>
     <addaction name="actionBackground_Color"/>
+    <addaction name="actionEnable_Transparency"/>
     <addaction name="actionShow_Toolbar"/>
    </widget>
    <addaction name="menuFrame"/>
@@ -129,6 +130,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionEnable_Transparency">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable Transparency</string>
    </property>
   </action>
  </widget>

@@ -44,6 +44,8 @@ private slots:
 
     void on_actionAdd_Random_Object_triggered();
 
+    void on_actionEnable_Transparency_triggered();
+
 private:
     void initMenu();
     void initStatusbar();

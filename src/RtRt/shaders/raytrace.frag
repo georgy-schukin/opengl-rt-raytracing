@@ -255,14 +255,6 @@ vec3 getIlluminationFull(vec3 point, vec3 ray) {
                 push(newState);
             }
         }
-        /*if (!hasIntersection || currDepth > numOfSteps) {
-            stack[currStackFrame].color += materials[spheres[info.sphereId].materialId].specular * info.color;
-        }*/
-        /*IntersectionInfo i1, i2;
-        vec3 reflColor = getColorAtIntersection(info.intersectionPoint, info.reflectedRay, i1);
-        color += (1.0 - info.refractionCoeff) * materials[spheres[info.sphereId].materialId].specular * reflColor;
-        vec3 refrColor = getColorAtIntersection(info.intersectionPoint, info.refractedRay, i2);
-        color += info.refractionCoeff * refrColor;*/
     }
     return finalColor;
 }

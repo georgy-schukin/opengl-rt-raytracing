@@ -31,6 +31,7 @@ Scene defaultScene() {
     auto purpleMat = scene.addMaterial(Material {purple * 0.6, purple * 0.4, 30});    
 
     scene.getMaterial(blueMat).makeTransparent(0.9, 1.03);
+    scene.getMaterial(redMat).makeTransparent(0.6, 0.8);
 
     scene.addObject(Sphere {{0, 2, 1}, 1.5, blueMat});
     scene.addObject(Sphere {{1, -2, 4}, 2, redMat});
@@ -59,6 +60,7 @@ void addRandomObject(Scene &scene, float max_pos = 5.0f, float min_rad = 0.2f, f
     const auto diffCoeff = dist(re);
     const auto specCoeff = dist(re);
     auto material = scene.addMaterial(Material {diffuse * diffCoeff, specular * specCoeff, dist(re) * 1000});
+    scene.getMaterial(material).makeTransparent(dist(re), 1.5f - dist(re));
     scene.addObject(Sphere {pos, radius, material});
 }
 
@@ -198,6 +200,14 @@ MyOpenGLWidget::SamplingMode MyOpenGLWidget::getSamplingMode() const {
     return sampling_mode;
 }
 
+void MyOpenGLWidget::enableTransparency(bool enabled) {
+    transparency_enabled = enabled;
+}
+
+bool MyOpenGLWidget::transparencyEnabled() const {
+    return transparency_enabled;
+}
+
 void MyOpenGLWidget::resizeGL(int width, int height) {
     auto *gl = context()->functions();
 
@@ -239,6 +249,7 @@ void MyOpenGLWidget::paintGL() {
     program->setUniformValue(program->uniformLocation("numOfSamples"), num_of_samples);
     program->setUniformValue(program->uniformLocation("samplingMode"), int(sampling_mode));
     program->setUniformValue(program->uniformLocation("numOfSteps"), num_of_steps);    
+    program->setUniformValue(program->uniformLocation("refractionEnabled"), transparency_enabled);
 
     const auto num_of_spheres = static_cast<int>(scene.objects.size());
     program->setUniformValue(program->uniformLocation("numOfSpheres"), num_of_spheres);

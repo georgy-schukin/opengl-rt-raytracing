@@ -37,6 +37,9 @@ public:
     void setSamplingMode(SamplingMode mode);
     SamplingMode getSamplingMode() const;
 
+    void enableTransparency(bool enabled);
+    bool transparencyEnabled() const;
+
     void randomScene();
     void clearScene();
     void addRandomObject();
@@ -89,4 +92,6 @@ private:
 
     QOpenGLTexture randoms;
     int randoms_size= 1;
+
+    bool transparency_enabled = false;
 };

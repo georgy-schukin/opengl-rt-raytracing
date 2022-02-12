@@ -132,3 +132,8 @@ void MainWindow::on_actionAdd_Random_Object_triggered() {
     gl_widget->addRandomObject();
     gl_widget->update();
 }
+
+void MainWindow::on_actionEnable_Transparency_triggered() {
+    gl_widget->enableTransparency(ui->actionEnable_Transparency->isChecked());
+    gl_widget->update();
+}
