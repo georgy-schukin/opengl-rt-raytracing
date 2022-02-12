@@ -51,6 +51,7 @@ void addRandomObject(Scene &scene, float max_pos = 5.0f, float min_rad = 0.2f, f
     std::random_device rd;
     std::mt19937 re(rd());
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    std::normal_distribution<float> normDist(0.5, 0.5);
     QVector3D pos {2 * max_pos * dist(re) - max_pos,
                    2 * max_pos * dist(re) - max_pos,
                    2 * max_pos * dist(re) - max_pos};
@@ -60,7 +61,7 @@ void addRandomObject(Scene &scene, float max_pos = 5.0f, float min_rad = 0.2f, f
     const auto diffCoeff = dist(re);
     const auto specCoeff = dist(re);
     auto material = scene.addMaterial(Material {diffuse * diffCoeff, specular * specCoeff, dist(re) * 1000});
-    scene.getMaterial(material).makeTransparent(dist(re), 1.5f - dist(re));
+    scene.getMaterial(material).makeTransparent(normDist(re), 1.5f - normDist(re));
     scene.addObject(Sphere {pos, radius, material});
 }
 

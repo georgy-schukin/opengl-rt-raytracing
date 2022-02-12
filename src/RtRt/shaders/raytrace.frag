@@ -243,13 +243,15 @@ vec3 getIlluminationFull(vec3 point, vec3 ray) {
             newState.parent = parent;
             newState.shootRay = true;
             // Reflected ray.
-            if (info.refractionCoeff < 1) {
+            float reflectionCoeff = 1.0 - info.refractionCoeff;
+            if (reflectionCoeff > 1e-3) {
+                vec3 reflMult = reflectionCoeff * materials[spheres[info.sphereId].materialId].specular;
                 newState.ray = info.reflectedRay;
-                newState.coeff = (1.0 - info.refractionCoeff) * materials[spheres[info.sphereId].materialId].specular;
+                newState.coeff = reflMult;
                 push(newState);
             }
             // Refracted ray.
-            if (info.refractionCoeff > 0) {
+            if (info.refractionCoeff > 1e-3) {
                 newState.ray = info.refractedRay;
                 newState.coeff = info.refractionCoeff * vec3(1.0);
                 push(newState);
