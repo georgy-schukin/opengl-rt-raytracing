@@ -235,7 +235,7 @@ vec3 getIlluminationFull(vec3 point, vec3 ray) {
         int parent = currStackSize;
         push(state);
         // Add tasks for child rays.
-        if (hasIntersection && curr.depth < numOfSteps) {
+        if (hasIntersection && curr.depth < numOfSteps && currStackSize < maxStackSize) {
             State newState;
             newState.point = info.intersectionPoint;
             newState.color = vec3(0.0);
