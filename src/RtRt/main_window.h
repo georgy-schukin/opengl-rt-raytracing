@@ -34,8 +34,6 @@ private slots:
 
     void on_actionExit_triggered();
 
-    void on_actionShow_Toolbar_triggered();
-
     void on_actionRandom_Scene_triggered();
 
     void on_actionBackground_Color_triggered();
@@ -44,7 +42,9 @@ private slots:
 
     void on_actionAdd_Random_Object_triggered();
 
-    void on_actionEnable_Transparency_triggered();
+    void on_actionShow_Toolbar_toggled(bool show);
+
+    void on_actionEnable_Transparency_toggled(bool enabled);
 
 private:
     void initMenu();

@@ -9,13 +9,26 @@
 #include <QSettings>
 #include <QSlider>
 #include <QLineEdit>
+#include <QSettings>
 
 #include <cmath>
+
+namespace {
+
+    static const QString MAX_DEPTH = "max-depth";
+    static const QString NUM_OF_SAMPLES = "num-of-samples";
+    static const QString SAMPLING_MODE = "sampling-mode";
+    static const QString BG_COLOR = "background-color";
+    static const QString ENABLE_TRASNSPARENCY = "enable-transparency";
+    static const QString SHOW_TOOLBAR = "show-toolbar";
+
+    static QSettings appSettings;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
-{
+{       
     ui->setupUi(this);
 
     gl_widget = ui->openGLWidget;
@@ -24,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     initMenu();
     initStatusbar();
     initToolbar();
+    initSettings();
 
     default_title = windowTitle();
 }
@@ -49,6 +63,7 @@ void MainWindow::initToolbar() {
     connect(steps, qOverload<int>(&QSpinBox::valueChanged), [this](int value) {
         gl_widget->setIterationLimit(value);
         gl_widget->update();
+        appSettings.setValue(MAX_DEPTH, value);
     });
 
     samples = new QSpinBox(this);
@@ -59,6 +74,7 @@ void MainWindow::initToolbar() {
     connect(samples, qOverload<int>(&QSpinBox::valueChanged), [this](int value) {
         gl_widget->setNumOfSamples(value);
         gl_widget->update();
+        appSettings.setValue(NUM_OF_SAMPLES, value);
     });
 
     sampling_mode = new QComboBox(this);
@@ -68,6 +84,7 @@ void MainWindow::initToolbar() {
     connect(sampling_mode, qOverload<int>(&QComboBox::currentIndexChanged), [this](int index) {
         gl_widget->setSamplingMode(static_cast<MyOpenGLWidget::SamplingMode>(index));
         gl_widget->update();
+        appSettings.setValue(SAMPLING_MODE, index);
     });
 
     ui->mainToolBar->addWidget(new QLabel("Steps: ", this));
@@ -83,6 +100,25 @@ void MainWindow::initGlWidget() {
 }
 
 void MainWindow::initSettings() {
+    if (appSettings.contains(SHOW_TOOLBAR)) {
+        ui->actionShow_Toolbar->setChecked(appSettings.value(SHOW_TOOLBAR).toBool());
+    }
+    if (appSettings.contains(ENABLE_TRASNSPARENCY)) {
+        ui->actionEnable_Transparency->setChecked(appSettings.value(ENABLE_TRASNSPARENCY).toBool());
+    }
+    if (appSettings.contains(MAX_DEPTH)) {
+        steps->setValue(appSettings.value(MAX_DEPTH).toInt());
+    }
+    if (appSettings.contains(NUM_OF_SAMPLES)) {
+        samples->setValue(appSettings.value(NUM_OF_SAMPLES).toInt());
+    }
+    if (appSettings.contains(SAMPLING_MODE)) {
+        sampling_mode->setCurrentIndex(appSettings.value(SAMPLING_MODE).toInt());
+    }
+    if (appSettings.contains(BG_COLOR)) {
+        gl_widget->setBackgroundColor(appSettings.value(BG_COLOR).value<QColor>());
+        gl_widget->update();
+    }
 }
 
 void MainWindow::resetSettings() {
@@ -104,10 +140,6 @@ void MainWindow::showError(QString message) {
     QMessageBox::critical(this, "Error", message);
 }
 
-void MainWindow::on_actionShow_Toolbar_triggered() {
-    ui->mainToolBar->setVisible(!ui->mainToolBar->isVisible());
-}
-
 void MainWindow::on_actionRandom_Scene_triggered() {
     gl_widget->randomScene();
     gl_widget->update();
@@ -120,6 +152,7 @@ void MainWindow::on_actionBackground_Color_triggered() {
     if (color.isValid()) {
         gl_widget->setBackgroundColor(color);
         gl_widget->update();
+        appSettings.setValue(BG_COLOR, color);
     }
 }
 
@@ -133,7 +166,13 @@ void MainWindow::on_actionAdd_Random_Object_triggered() {
     gl_widget->update();
 }
 
-void MainWindow::on_actionEnable_Transparency_triggered() {
-    gl_widget->enableTransparency(ui->actionEnable_Transparency->isChecked());
+void MainWindow::on_actionShow_Toolbar_toggled(bool show) {
+    ui->mainToolBar->setVisible(show);
+    appSettings.setValue(SHOW_TOOLBAR, show);
+}
+
+void MainWindow::on_actionEnable_Transparency_toggled(bool enabled) {
+    gl_widget->enableTransparency(enabled);
     gl_widget->update();
+    appSettings.setValue(ENABLE_TRASNSPARENCY, enabled);
 }
