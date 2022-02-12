@@ -80,7 +80,7 @@ private:
 
     Scene scene;
 
-    int num_of_steps = 10;
+    int num_of_steps = 5;
     int num_of_samples = 1;
     SamplingMode sampling_mode = SM_RANDOM;
 

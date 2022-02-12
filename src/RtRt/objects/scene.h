@@ -23,6 +23,14 @@ public:
         return static_cast<int>(materials.size()) - 1;
     }
 
+    Material& getMaterial(int matIndex) {
+        return materials[matIndex];
+    }
+
+    const Material& getMaterial(int matIndex) const {
+        return materials[matIndex];
+    }
+
     void clear() {
         objects.clear();
     }

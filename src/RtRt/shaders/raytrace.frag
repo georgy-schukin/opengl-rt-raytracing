@@ -1,14 +1,12 @@
 #version 330
 
-struct Sphere
-{
+struct Sphere {
     vec3 position;
     float radius;
     int materialId;
 };
 
-struct LightSource
-{
+struct LightSource {
     vec3 position;
     vec3 color;
 };
@@ -17,6 +15,8 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    float refractionCoeff;
+    float refractionIndex;
 };
 
 uniform Sphere spheres[256];
@@ -40,8 +40,9 @@ bool intersectSphere(Sphere sphere, vec3 startPoint, vec3 ray, out float interse
         return false;
     }
 
-    float t1 = -d + sqrt(discriminant);
-    float t2 = -d - sqrt(discriminant);
+    float sq = sqrt(discriminant);
+    float t1 = -d + sq;
+    float t2 = -d - sq;
 
     float t = 0;
     float epsilon = 1e-3;
@@ -89,23 +90,34 @@ vec3 shade(Material mat, vec3 lightColor, vec3 normal, vec3 reflected, vec3 toLi
     return (mat.diffuse * diffuseCoeff + mat.specular * specularCoeff) * lightColor;
 }
 
-bool nextIntersection(vec3 point, vec3 ray, int step, out vec3 color, out vec3 intersectionPoint, out vec3 reflectedRay, out Sphere sphere) {
-    color = vec3(0.0);
+struct IntersectionInfo {
+    int sphereId;
+    vec3 color;
+    vec3 intersectionPoint;
+    vec3 reflectedRay;
+    vec3 refractedRay;
+    float refractionCoeff;
+};
+
+bool getColorAtIntersection(vec3 point, vec3 ray, out IntersectionInfo info) {
+    vec3 color = vec3(0.0);
+    vec3 intersectionPoint;
     // Find an object we a looking at
     int closestObject = getIntersection(point, ray, intersectionPoint);
     if (closestObject == -1) {
-        color = backgroundColor;
+        info.sphereId = closestObject;
+        info.color = backgroundColor;
         return false;
     }
 
-    sphere = spheres[closestObject];
+    Sphere sphere = spheres[closestObject];
     Material material = materials[sphere.materialId];
     //return closestSphere.color;
 
     vec3 normal = normalize(intersectionPoint - sphere.position);
     vec3 toViewer = -ray;
     float cosThetaI = dot(normal, toViewer);
-    reflectedRay = 2 * cosThetaI * normal - toViewer;
+    vec3 reflectedRay = normalize(2 * cosThetaI * normal - toViewer);
 
     // Add illumination from each light.
     for (int i = 0; i < numOfLightSources; i++) {
@@ -130,36 +142,150 @@ bool nextIntersection(vec3 point, vec3 ray, int step, out vec3 color, out vec3 i
 
     // Apply ambient light
     color += ambientLight * material.diffuse;
+
+    float refractionCoeff = material.refractionCoeff;
+    vec3 refractedRay = vec3(0.0);
+    // Check for refraction.
+    if (refractionCoeff > 0) {
+        float nu = 1.0 / material.refractionIndex; // assume refraction index 1.0 for air
+        // Check if we hit object from inside.
+        if (cosThetaI < 0) {
+            nu = 1.0 / nu;
+            normal = -normal;
+            cosThetaI = -cosThetaI;
+        }
+        float cosThetaT = 1.0 - (1.0 - cosThetaI * cosThetaI) * (nu * nu);
+        // Check for total internal reflection (no refraction).
+        if (cosThetaT < 0) {
+            refractionCoeff = 0.0;
+        } else {
+            cosThetaT = sqrt(cosThetaT);
+            refractedRay = normalize((cosThetaI * nu - cosThetaT) * normal - toViewer * nu);
+        }
+    }
+
+    info.sphereId = closestObject;
+    info.intersectionPoint = intersectionPoint;
+    info.color = color;
+    info.reflectedRay = reflectedRay;
+    info.refractedRay = refractedRay;
+    info.refractionCoeff = refractionCoeff;
+
     return true;
 }
 
-vec3 getIllumination(vec3 point, vec3 ray) {
+const int PRIMARY_RAY = 0;
+const int REFLECTION_RAY = 1;
+const int REFRACTION_RAY = 2;
+
+struct State {
+    vec3 color;
+    vec3 point;
+    vec3 ray;
+    vec3 coeff;
+    int depth;
+    int parent;
+    bool shootRay;
+};
+
+const int maxStackSize = 1024;
+int currStackSize = 0;
+State stack[maxStackSize];
+
+void push(State state) {
+    stack[currStackSize] = state;
+    currStackSize++;
+}
+
+void pop(out State state) {
+    currStackSize--;
+    state = stack[currStackSize];
+}
+
+vec3 getIlluminationFull(vec3 point, vec3 ray) {
+    State curr;
+    curr.color = vec3(0.0);
+    curr.point = point;
+    curr.ray = ray;
+    curr.coeff = vec3(1.0);
+    curr.depth = 0;
+    curr.parent = -1;
+    curr.shootRay = true;
+
+    vec3 finalColor = vec3(0.0);
+
+    push(curr);
+
+    while (currStackSize > 0) {
+        pop(curr);
+        if (!curr.shootRay) {
+            if (curr.parent >= 0) {
+                stack[curr.parent].color += curr.coeff * curr.color;
+            } else {
+                finalColor += curr.coeff * curr.color;
+            }
+            continue;
+        }
+        IntersectionInfo info;
+        bool hasIntersection = getColorAtIntersection(curr.point, curr.ray, info);
+        // Add parent task.
+        State state = curr;
+        state.color = info.color;
+        state.shootRay = false;
+        int parent = currStackSize;
+        push(state);
+        // Add tasks for child rays.
+        if (hasIntersection && curr.depth < numOfSteps) {
+            State newState;
+            newState.point = info.intersectionPoint;
+            newState.color = vec3(0.0);
+            newState.depth = curr.depth + 1;
+            newState.parent = parent;
+            newState.shootRay = true;
+            // Reflected ray.
+            if (info.refractionCoeff < 1) {
+                newState.ray = info.reflectedRay;
+                newState.coeff = (1.0 - info.refractionCoeff) * materials[spheres[info.sphereId].materialId].specular;
+                push(newState);
+            }
+            // Refracted ray.
+            if (info.refractionCoeff > 0) {
+                newState.ray = info.refractedRay;
+                newState.coeff = info.refractionCoeff * vec3(1.0);
+                push(newState);
+            }
+        }
+        /*if (!hasIntersection || currDepth > numOfSteps) {
+            stack[currStackFrame].color += materials[spheres[info.sphereId].materialId].specular * info.color;
+        }*/
+        /*IntersectionInfo i1, i2;
+        vec3 reflColor = getColorAtIntersection(info.intersectionPoint, info.reflectedRay, i1);
+        color += (1.0 - info.refractionCoeff) * materials[spheres[info.sphereId].materialId].specular * reflColor;
+        vec3 refrColor = getColorAtIntersection(info.intersectionPoint, info.refractedRay, i2);
+        color += info.refractionCoeff * refrColor;*/
+    }
+    return finalColor;
+}
+
+vec3 getIlluminationReflectionOnly(vec3 point, vec3 ray) {
     vec3 totalColor = vec3(0.0);
     vec3 currPoint = point;
     vec3 currRay = ray;
     vec3 currMult = vec3(1.0);
+
     bool stop = false;
-
     for (int n = 0; n < numOfSteps && !stop; n++) {
-        vec3 intersectionPoint;
-        vec3 reflectedRay;
-        vec3 color;
-        Sphere sphere;
-        stop = !nextIntersection(currPoint, currRay, n, color, intersectionPoint, reflectedRay, sphere);
-        if (stop) {
-            totalColor += currMult * color;
+        IntersectionInfo info;
+        bool hasIntersection = getColorAtIntersection(currPoint, currRay, info);
+        if (!hasIntersection) {
+            totalColor += currMult * info.color;
+            stop = true;
         } else {
-            totalColor += currMult * color;
-            currPoint = intersectionPoint;
-            currRay = reflectedRay;
-            currMult *= materials[sphere.materialId].specular;
+            totalColor += currMult * info.color;
+            currPoint = info.intersectionPoint;
+            currRay = info.reflectedRay;
+            currMult *= materials[spheres[info.sphereId].materialId].specular;
         }
-
-        //if (recursionStep < numOfSteps) {
-            // Reflection
-            //vec3 reflectionColor = getIllumination(illumPoint, normalize(reflectedRay), recursionStep + 1);
-            //color += currSphere.color * reflectionColor;
-        //}
     }
     return totalColor;
 }
@@ -177,6 +303,7 @@ uniform int randomsSize;
 
 uniform int numOfSamples = 1;
 uniform int samplingMode = 0;
+uniform bool refractionEnabled = true;
 
 out vec4 fragColor;
 
@@ -197,7 +324,9 @@ vec3 shoot(vec2 fragCoord, float aspect, vec3 viewPoint) {
     float py = (2 * (fragCoord.y + 0.5) / windowSize.y - 1) * fovTangent;
     vec3 posWorld = vec4(camToWorld * vec4(px, py, -1, 1)).xyz;
     vec3 ray = normalize(posWorld - viewPoint);
-    vec3 color = getIllumination(viewPoint, ray);
+    vec3 color = refractionEnabled ?
+                getIlluminationFull(viewPoint, ray) :
+                getIlluminationReflectionOnly(viewPoint, ray);
     return color;
 }
 
@@ -225,17 +354,7 @@ void main()
                 color += shoot(gl_FragCoord.xy - vec2(0.5) + vec2(dx, dy), aspect, viewPoint);
             }
             color /= (numOfSamples * numOfSamples);
-        }
-        /*int jx = int(gl_FragCoord.x) % (jitterSize * numOfSamples);
-        int jy = int(gl_FragCoord.y) % (jitterSize * numOfSamples);
-        vec2 start = gl_FragCoord.xy / (jitterSize * numOfSamples);
-        for (int i = 0; i < numOfSamples; i++)
-        for (int j = 0; j < numOfSamples; j++) {
-            vec2 jit = texture(jitter, start + vec2(i, j) / jitterSize).rg;
-            jit = (jit * jitterSize - vec2(jx, jy)) / numOfSamples;
-            color += shoot(gl_FragCoord.xy - vec2(0.5) + jit, aspect, viewPoint);
-        }*/
+        }       
     }
-    fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1.0f);
-    //fragColor = vec4(pixelPos.x - int(pixelPos.x), pixelPos.y - int(pixelPos.y), 0, 1);
+    fragColor = vec4(clamp(color, vec3(0), vec3(1)), 1.0f);    
 }

@@ -28,7 +28,9 @@ Scene defaultScene() {
     auto greenMat = scene.addMaterial(Material {green * 0.8, green * 0.2, 10});
     auto whiteMat = scene.addMaterial(Material {white * 0.9, white * 0.1, 50});
     auto yellowMat = scene.addMaterial(Material {yellow * 0.1,yellow * 0.9, 500});
-    auto purpleMat = scene.addMaterial(Material {purple * 0.6, purple * 0.4, 30});
+    auto purpleMat = scene.addMaterial(Material {purple * 0.6, purple * 0.4, 30});    
+
+    scene.getMaterial(blueMat).makeTransparent(0.9, 1.03);
 
     scene.addObject(Sphere {{0, 2, 1}, 1.5, blueMat});
     scene.addObject(Sphere {{1, -2, 4}, 2, redMat});
@@ -52,9 +54,11 @@ void addRandomObject(Scene &scene, float max_pos = 5.0f, float min_rad = 0.2f, f
                    2 * max_pos * dist(re) - max_pos,
                    2 * max_pos * dist(re) - max_pos};
     double radius {(max_rad - min_rad) * dist(re) + min_rad};
-    QVector3D color {dist(re), dist(re), dist(re)};
-    auto coeff = dist(re);
-    auto material = scene.addMaterial(Material {color * coeff, color * (1.0 - coeff), dist(re) * 1000});
+    QVector3D diffuse {dist(re), dist(re), dist(re)};
+    QVector3D specular {dist(re), dist(re), dist(re)};
+    const auto diffCoeff = dist(re);
+    const auto specCoeff = dist(re);
+    auto material = scene.addMaterial(Material {diffuse * diffCoeff, specular * specCoeff, dist(re) * 1000});
     scene.addObject(Sphere {pos, radius, material});
 }
 
@@ -260,6 +264,8 @@ void MyOpenGLWidget::paintGL() {
         program->setUniformValue(program->uniformLocation(QString("materials[%1].diffuse").arg(cnt)), m.diffuse);
         program->setUniformValue(program->uniformLocation(QString("materials[%1].specular").arg(cnt)), m.specular);
         program->setUniformValue(program->uniformLocation(QString("materials[%1].shininess").arg(cnt)), m.shininess);
+        program->setUniformValue(program->uniformLocation(QString("materials[%1].refractionCoeff").arg(cnt)), m.refractionCoeff);
+        program->setUniformValue(program->uniformLocation(QString("materials[%1].refractionIndex").arg(cnt)), m.refractionIndex);
         cnt++;
     }
 
