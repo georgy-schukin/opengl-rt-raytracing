@@ -102,6 +102,9 @@
    <property name="text">
     <string>Show Toolbar</string>
    </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
+   </property>
   </action>
   <action name="actionRandom_Scene">
    <property name="text">
@@ -138,6 +141,9 @@
    </property>
    <property name="text">
     <string>Enable Transparency</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+T</string>
    </property>
   </action>
  </widget>
