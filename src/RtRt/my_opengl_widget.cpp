@@ -86,7 +86,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
-    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setProfile(QSurfaceFormat::CoreProfile);    
     format.setSamples(1);
     setFormat(format);
 }
